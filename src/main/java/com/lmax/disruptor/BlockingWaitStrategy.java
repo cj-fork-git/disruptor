@@ -41,7 +41,7 @@ public final class BlockingWaitStrategy implements WaitStrategy
                 }
             }
         }
-
+        //当前sequence和所有依赖sequence之间取最小值为可消费sequence
         while ((availableSequence = dependentSequence.get()) < sequence)
         {
             barrier.checkAlert();

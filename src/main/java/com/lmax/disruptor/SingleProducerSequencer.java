@@ -93,7 +93,7 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
     private boolean hasAvailableCapacity(final int requiredCapacity, final boolean doStore)
     {
         long nextValue = this.nextValue;
-
+        //wrapPoint是一个临界序号，必须比当前最小的未消费序号还小
         long wrapPoint = (nextValue + requiredCapacity) - bufferSize;
         long cachedGatingSequence = this.cachedValue;
 
