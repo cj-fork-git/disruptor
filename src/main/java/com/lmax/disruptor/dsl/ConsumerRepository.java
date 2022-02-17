@@ -20,6 +20,7 @@ import com.lmax.disruptor.*;
 import java.util.*;
 
 /**
+ * 仓库：维护所有消费者关系
  * Provides a repository mechanism to associate {@link EventHandler}s with {@link EventProcessor}s
  *
  * @param <T> the type of the {@link EventHandler}
