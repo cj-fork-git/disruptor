@@ -96,7 +96,7 @@ public final class WorkerPool<T>
                 exceptionHandler,
                 workSequence);
         }
-
+        //TODO:cj 这个作用是什么
         ringBuffer.addGatingSequences(getWorkerSequences());
     }
 
@@ -151,6 +151,7 @@ public final class WorkerPool<T>
         Sequence[] workerSequences = getWorkerSequences();
         while (ringBuffer.getCursor() > Util.getMinimumSequence(workerSequences))
         {
+            //仍然存在事件未消费
             Thread.yield();
         }
 
