@@ -29,11 +29,13 @@ public final class WorkProcessor<T>
     implements EventProcessor
 {
     private final AtomicBoolean running = new AtomicBoolean(false);
+    //WorkProcessor自己的Sequence
     private final Sequence sequence = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
     private final RingBuffer<T> ringBuffer;
     private final SequenceBarrier sequenceBarrier;
     private final WorkHandler<? super T> workHandler;
     private final ExceptionHandler<? super T> exceptionHandler;
+    //workerPool的sequence
     private final Sequence workSequence;
 
     private final EventReleaser eventReleaser = new EventReleaser()
@@ -112,7 +114,7 @@ public final class WorkProcessor<T>
         sequenceBarrier.clearAlert();
 
         notifyStart();
-
+        //标记已处理sequence
         boolean processedSequence = true;
         long cachedAvailableSequence = Long.MIN_VALUE;
         long nextSequence = sequence.get();
@@ -128,10 +130,13 @@ public final class WorkProcessor<T>
                 // is thrown from the WorkHandler
                 if (processedSequence)
                 {
+                    //已处理sequence后，都要CAS无锁拿到下一个需要处理的workpool的sequence
                     processedSequence = false;
+                    //CAS无锁更新workpool的sequence
                     do
                     {
                         nextSequence = workSequence.get() + 1L;
+                        //获取workpool处理的消费的最新游标，并更新到work自身上去
                         sequence.set(nextSequence - 1L);
                     }
                     while (!workSequence.compareAndSet(nextSequence - 1L, nextSequence));
@@ -139,12 +144,14 @@ public final class WorkProcessor<T>
 
                 if (cachedAvailableSequence >= nextSequence)
                 {
+                    //存在可消费事件
                     event = ringBuffer.get(nextSequence);
                     workHandler.onEvent(event);
                     processedSequence = true;
                 }
                 else
                 {
+                    //不存在可消费事件
                     cachedAvailableSequence = sequenceBarrier.waitFor(nextSequence);
                 }
             }

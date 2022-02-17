@@ -122,7 +122,7 @@ public class Sequence extends RhsPadding
      * @param newValue The value to update to.
      * @return true if the operation succeeds, false otherwise.
      */
-    public boolean compareAndSet(final long expectedValue, final long newValue)
+    public boolean  compareAndSet(final long expectedValue, final long newValue)
     {
         return UNSAFE.compareAndSwapLong(this, VALUE_OFFSET, expectedValue, newValue);
     }
