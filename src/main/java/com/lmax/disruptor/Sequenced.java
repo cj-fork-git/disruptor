@@ -10,6 +10,7 @@ public interface Sequenced
     int getBufferSize();
 
     /**
+     * 最大可申请容量不能超过ringbuffer size,否则可能导致事件数据覆盖问题
      * Has the buffer got capacity to allocate another sequence.  This is a concurrent
      * method so the response should only be taken as an indication of available capacity.
      *
@@ -19,6 +20,7 @@ public interface Sequenced
     boolean hasAvailableCapacity(int requiredCapacity);
 
     /**
+     * 计算剩余可存储容量，最大值ringbuffer size
      * Get the remaining capacity for this sequencer.
      *
      * @return The number of slots remaining.

@@ -23,6 +23,7 @@ package com.lmax.disruptor;
 public interface SequenceBarrier
 {
     /**
+     * 核心方法
      * Wait for the given sequence to be available for consumption.
      *
      * @param sequence to wait for

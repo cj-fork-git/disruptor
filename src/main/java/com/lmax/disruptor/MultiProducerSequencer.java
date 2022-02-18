@@ -23,6 +23,7 @@ import com.lmax.disruptor.util.Util;
 
 
 /**
+ * 线程安全
  * <p>Coordinator for claiming sequences for access to a data structure while tracking dependent {@link Sequence}s.
  * Suitable for use for sequencing across multiple publisher threads.</p>
  *
@@ -33,7 +34,9 @@ import com.lmax.disruptor.util.Util;
 public final class MultiProducerSequencer extends AbstractSequencer
 {
     private static final Unsafe UNSAFE = Util.getUnsafe();
+    //int[]数组对象第一个元素内存偏移量
     private static final long BASE = UNSAFE.arrayBaseOffset(int[].class);
+    //int[]数组对象一个元素内存字节大小
     private static final long SCALE = UNSAFE.arrayIndexScale(int[].class);
 
     private final Sequence gatingSequenceCache = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);

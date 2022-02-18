@@ -24,6 +24,10 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  */
 class SequenceGroups
 {
+    /**
+     * 1.更新holder对象的updater方法的sequenced值
+     * 2.更新入参sequencesToAdd数组的每个sequence的value值
+     */
     static <T> void addSequences(
         final T holder,
         final AtomicReferenceFieldUpdater<T, Sequence[]> updater,
@@ -48,7 +52,7 @@ class SequenceGroups
             }
         }
         while (!updater.compareAndSet(holder, currentSequences, updatedSequences));
-
+        //TODO为什么又重新设置一遍，并发访问原因？
         cursorSequence = cursor.getCursor();
         for (Sequence sequence : sequencesToAdd)
         {

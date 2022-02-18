@@ -34,6 +34,7 @@ public interface Sequencer extends Cursored, Sequenced
     void claim(long sequence);
 
     /**
+     * 判断指定sequence是否发布过
      * Confirms if a sequence is published and the event is available for use; non-blocking.
      *
      * @param sequence of the buffer to check

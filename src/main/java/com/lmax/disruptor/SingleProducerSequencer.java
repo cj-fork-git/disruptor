@@ -39,11 +39,14 @@ abstract class SingleProducerSequencerFields extends SingleProducerSequencerPad
     /**
      * Set to -1 as sequence starting point
      */
+    //发布者最新sequence值
     long nextValue = Sequence.INITIAL_VALUE;
+    //维护消费者集合消费最低的sequence值
     long cachedValue = Sequence.INITIAL_VALUE;
 }
 
 /**
+ * 多线程不安全 多线程发布者请使用MultiProducerSequencer
  * <p>Coordinator for claiming sequences for access to a data structure while tracking dependent {@link Sequence}s.
  * Not safe for use from multiple threads as it does not implement any barriers.</p>
  *
@@ -78,20 +81,22 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
     private boolean hasAvailableCapacity(int requiredCapacity, boolean doStore)
     {
         long nextValue = this.nextValue;
-
+        //最高可发布sequence值阈值A<Min(消费者集合已消费的最低sequence值)+bufferSize，不能套娃。nextValue + requiredCapacity表示阈值A
         long wrapPoint = (nextValue + requiredCapacity) - bufferSize;
         long cachedGatingSequence = this.cachedValue;
-
+        //貌似不太可能满足cachedGatingSequence > nextValue 条件
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
         {
+            //TODO:cj doStore传true的时候作用
             if (doStore)
             {
                 cursor.setVolatile(nextValue);  // StoreLoad fence
             }
 
             long minSequence = Util.getMinimumSequence(gatingSequences, nextValue);
+            //更新最新的消费者集合消费的sequence点
             this.cachedValue = minSequence;
-
+            //可发布阈值还是大于消费者集合已消费sequence最低值，表示申请可用容量不足,则返回false
             if (wrapPoint > minSequence)
             {
                 return false;
@@ -124,14 +129,17 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
         long nextValue = this.nextValue;
 
         long nextSequence = nextValue + n;
+        //最高可发布sequence值阈值A<Min(消费者集合已消费的最低sequence值)+bufferSize，不能套娃。nextSequence表示阈值A
         long wrapPoint = nextSequence - bufferSize;
         long cachedGatingSequence = this.cachedValue;
 
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
         {
+            //供其他消费者线程可见，而非生产者线程，因为这就是个单生产者线程
             cursor.setVolatile(nextValue);  // StoreLoad fence
 
             long minSequence;
+            //如果消费速度过慢，导致最低已消费sequence更新太慢， 则无限循环等待消费者完成最低sequence消费，使得可供生产者生产事件
             while (wrapPoint > (minSequence = Util.getMinimumSequence(gatingSequences, nextValue)))
             {
                 LockSupport.parkNanos(1L); // TODO: Use waitStrategy to spin?
@@ -182,8 +190,9 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
     public long remainingCapacity()
     {
         long nextValue = this.nextValue;
-
+        //最低已消费sequence值
         long consumed = Util.getMinimumSequence(gatingSequences, nextValue);
+        //已发布sequence值
         long produced = nextValue;
         return getBufferSize() - (produced - consumed);
     }
