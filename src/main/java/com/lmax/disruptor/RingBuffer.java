@@ -399,7 +399,7 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements Cursored
      * Create a new SequenceBarrier to be used by an EventProcessor to track which messages
      * are available to be read from the ring buffer given a list of sequences to track.
      *
-     * @param sequencesToTrack the additional sequences to track
+     * @param sequencesToTrack the additional sequences to track 可为空
      * @return A sequence barrier that will track the specified sequences.
      * @see SequenceBarrier
      */
