@@ -78,6 +78,7 @@ public interface Sequencer extends Cursored, Sequenced
     long getMinimumSequence();
 
     /**
+     * 得到ringbuffer安全读的已发布的最大sequence值
      * Get the highest sequence number that can be safely read from the ring buffer.  Depending
      * on the implementation of the Sequencer this call may need to scan a number of values
      * in the Sequencer.  The scan will range from nextSequence to availableSequence.  If

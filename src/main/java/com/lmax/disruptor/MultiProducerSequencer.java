@@ -38,13 +38,16 @@ public final class MultiProducerSequencer extends AbstractSequencer
     private static final long BASE = UNSAFE.arrayBaseOffset(int[].class);
     //int[]数组对象一个元素内存字节大小
     private static final long SCALE = UNSAFE.arrayIndexScale(int[].class);
-
+    //消费者集合已消费sequence
     private final Sequence gatingSequenceCache = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
 
     // availableBuffer tracks the state of each ringbuffer slot
     // see below for more details on the approach
+    //可用性buffer数组用于ringbuffer状态跟踪
     private final int[] availableBuffer;
+    //=bufferSize - 1
     private final int indexMask;
+    //=Util.log2(bufferSize)
     private final int indexShift;
 
     /**
@@ -126,7 +129,7 @@ public final class MultiProducerSequencer extends AbstractSequencer
         {
             current = cursor.get();
             next = current + n;
-
+            //最高可发布sequence值阈值A<Min(消费者集合已消费的最低sequence值)+bufferSize，不能套娃。nextSequence表示阈值A
             long wrapPoint = next - bufferSize;
             long cachedGatingSequence = gatingSequenceCache.get();
 
@@ -139,9 +142,10 @@ public final class MultiProducerSequencer extends AbstractSequencer
                     LockSupport.parkNanos(1); // TODO, should we spin based on the wait strategy?
                     continue;
                 }
-
+                //更新消费者最低已消费sequence
                 gatingSequenceCache.set(gatingSequence);
             }
+            //CAS原子更新，因为可能多个生产者线程并发修改current
             else if (cursor.compareAndSet(current, next))
             {
                 break;
@@ -196,7 +200,9 @@ public final class MultiProducerSequencer extends AbstractSequencer
     @Override
     public long remainingCapacity()
     {
+        //最低已消费sequence值
         long consumed = Util.getMinimumSequence(gatingSequences, cursor.get());
+        //已发布sequence值
         long produced = cursor.get();
         return getBufferSize() - (produced - consumed);
     }
@@ -258,6 +264,9 @@ public final class MultiProducerSequencer extends AbstractSequencer
         setAvailableBufferValue(calculateIndex(sequence), calculateAvailabilityFlag(sequence));
     }
 
+    /**
+     * 设置指定数组buffer下标为flag值
+     */
     private void setAvailableBufferValue(int index, int flag)
     {
         long bufferAddress = (index * SCALE) + BASE;
@@ -270,8 +279,11 @@ public final class MultiProducerSequencer extends AbstractSequencer
     @Override
     public boolean isAvailable(long sequence)
     {
+        //buffer数组下标
         int index = calculateIndex(sequence);
+        //计算sequence对应的flag值
         int flag = calculateAvailabilityFlag(sequence);
+        //buffer数组下标偏移量
         long bufferAddress = (index * SCALE) + BASE;
         return UNSAFE.getIntVolatile(availableBuffer, bufferAddress) == flag;
     }
@@ -292,6 +304,7 @@ public final class MultiProducerSequencer extends AbstractSequencer
 
     private int calculateAvailabilityFlag(final long sequence)
     {
+        //无符号右移
         return (int) (sequence >>> indexShift);
     }
 
