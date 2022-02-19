@@ -24,6 +24,8 @@ import com.lmax.disruptor.WorkHandler;
 import java.util.Arrays;
 
 /**
+ * 每个组间也有依赖关系
+ * EventProcessor消费者的处理组，组内先后依赖关系，一个事件处理组里可以有多个消费者
  * A group of {@link EventProcessor}s used as part of the {@link Disruptor}.
  *
  * @param <T> the type of entry used by the event processors.
@@ -45,6 +47,7 @@ public class EventHandlerGroup<T>
     }
 
     /**
+     * this的sequences和otherHandlerGroup和sequences组合起来，添加在数组后面
      * Create a new event handler group that combines the consumers in this group with <tt>otherHandlerGroup</tt>.
      *
      * @param otherHandlerGroup the event handler group to combine.
@@ -61,6 +64,7 @@ public class EventHandlerGroup<T>
     }
 
     /**
+     * this的sequences和processors数组的sequences组合在一起，添加在数组后面
      * Create a new event handler group that combines the handlers in this group with <tt>processors</tt>.
      *
      * @param processors the processors to combine.

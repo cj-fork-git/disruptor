@@ -60,8 +60,10 @@ public class Disruptor<T>
 {
     private final RingBuffer<T> ringBuffer;
     private final Executor executor;
+    //消费者集合存储仓库
     private final ConsumerRepository<T> consumerRepository = new ConsumerRepository<>();
     private final AtomicBoolean started = new AtomicBoolean(false);
+    //异常处理器
     private ExceptionHandler<? super T> exceptionHandler = new ExceptionHandlerWrapper<>();
 
     /**
@@ -148,6 +150,7 @@ public class Disruptor<T>
     }
 
     /**
+     * 设置ringbuffer事件处理的EventHandler  事件处理链的开头
      * <p>Set up event handlers to handle events from the ring buffer. These handlers will process events
      * as soon as they become available, in parallel.</p>
      *
@@ -164,6 +167,7 @@ public class Disruptor<T>
     @SafeVarargs
     public final EventHandlerGroup<T> handleEventsWith(final EventHandler<? super T>... handlers)
     {
+        //设置空Sequence数组作为SequenceBarrier的sequences
         return createEventProcessors(new Sequence[0], handlers);
     }
 
@@ -545,13 +549,19 @@ public class Disruptor<T>
         return false;
     }
 
+
+    /**
+     * 批量创建一批事件处理组EventHandlerGroup
+     */
     EventHandlerGroup<T> createEventProcessors(
         final Sequence[] barrierSequences,
         final EventHandler<? super T>[] eventHandlers)
     {
+        //检查disruptor没有启动起来
         checkNotStarted();
 
         final Sequence[] processorSequences = new Sequence[eventHandlers.length];
+        //创建Sequence屏障
         final SequenceBarrier barrier = ringBuffer.newBarrier(barrierSequences);
 
         for (int i = 0, eventHandlersLength = eventHandlers.length; i < eventHandlersLength; i++)
@@ -565,25 +575,31 @@ public class Disruptor<T>
             {
                 batchEventProcessor.setExceptionHandler(exceptionHandler);
             }
-
+            //消费者仓库添加消费者
             consumerRepository.add(batchEventProcessor, eventHandler, barrier);
             processorSequences[i] = batchEventProcessor.getSequence();
         }
-
+        //更新ringBuffer的gatingSequence
         updateGatingSequencesForNextInChain(barrierSequences, processorSequences);
-
+        //组装eventHandlerGroup事件处理组
         return new EventHandlerGroup<>(this, consumerRepository, processorSequences);
     }
 
+    /**
+     * 更新ringBuffer的gatingSequence并更新barrierSequences的处理链终点关系
+     */
     private void updateGatingSequencesForNextInChain(final Sequence[] barrierSequences, final Sequence[] processorSequences)
     {
         if (processorSequences.length > 0)
         {
+            //添加处理链的终点Sequences到ringBuffer的gatingSequences
             ringBuffer.addGatingSequences(processorSequences);
             for (final Sequence barrierSequence : barrierSequences)
             {
+                //移除ringBuffer的gatingSequences中非处理链终点的Sequences
                 ringBuffer.removeGatingSequence(barrierSequence);
             }
+            //标记barrierSequences为处理链的非终点
             consumerRepository.unMarkEventProcessorsAsEndOfChain(barrierSequences);
         }
     }
