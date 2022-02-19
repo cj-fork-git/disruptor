@@ -41,6 +41,7 @@ public class ExceptionHandlerSetting<T>
     }
 
     /**
+     * 为指定eventhandler绑定特定ExceptionHandler
      * Specify the {@link ExceptionHandler} to use with the event handler.
      *
      * @param exceptionHandler the exception handler to use.

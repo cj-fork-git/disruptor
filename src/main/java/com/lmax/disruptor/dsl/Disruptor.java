@@ -211,6 +211,7 @@ public class Disruptor<T>
     {
         for (final EventProcessor processor : processors)
         {
+            //消费者仓库添加消费者
             consumerRepository.add(processor);
         }
 
@@ -219,9 +220,9 @@ public class Disruptor<T>
         {
             sequences[i] = processors[i].getSequence();
         }
-
+        //ringBuffer gatingSequences添加处理链终端sequences
         ringBuffer.addGatingSequences(sequences);
-
+        //返回eventHandlerGroup组
         return new EventHandlerGroup<>(this, consumerRepository, Util.getSequencesFor(processors));
     }
 
@@ -394,7 +395,7 @@ public class Disruptor<T>
      *
      * <p>The ring buffer is set up to prevent overwriting any entry that is yet to
      * be processed by the slowest event processor.</p>
-     *
+     * 该方法必须在所有事件处理器已经添加后才能调用
      * <p>This method must only be called once after all event processors have been added.</p>
      *
      * @return the configured ring buffer.
@@ -511,6 +512,7 @@ public class Disruptor<T>
     }
 
     /**
+     * 获取指定EventHandler的SequenceBarrier，该SequenceBarrier可能被多个eventHandler共享
      * Get the {@link SequenceBarrier} used by a specific handler. Note that the {@link SequenceBarrier}
      * may be shared by multiple event handlers.
      *
@@ -523,6 +525,7 @@ public class Disruptor<T>
     }
 
     /**
+     * 查询指定eventhandler当前处理的sequence值
      * Gets the sequence value for the specified event handlers.
      *
      * @param b1 eventHandler to get the sequence for.
@@ -534,6 +537,7 @@ public class Disruptor<T>
     }
 
     /**
+     * 判断所有事件是否已经被所有消费者消费
      * Confirms if all messages have been consumed by all event processors
      */
     private boolean hasBacklog()
@@ -622,7 +626,7 @@ public class Disruptor<T>
         final SequenceBarrier sequenceBarrier = ringBuffer.newBarrier(barrierSequences);
         final WorkerPool<T> workerPool = new WorkerPool<>(ringBuffer, sequenceBarrier, exceptionHandler, workHandlers);
 
-
+        //消费者仓库添加消费者：WorkerPoolInfo类型
         consumerRepository.add(workerPool, sequenceBarrier);
 
         final Sequence[] workerSequences = workerPool.getWorkerSequences();

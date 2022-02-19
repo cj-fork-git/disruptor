@@ -61,6 +61,9 @@ class ConsumerRepository<T> implements Iterable<ConsumerInfo>
         }
     }
 
+    /**
+     * 返回所有处于处理链终端的消费者的Sequence数组
+     */
     public Sequence[] getLastSequenceInChain(boolean includeStopped)
     {
         List<Sequence> lastSequence = new ArrayList<>();
