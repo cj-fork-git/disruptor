@@ -137,6 +137,7 @@ public final class WorkProcessor<T>
                     {
                         nextSequence = workSequence.get() + 1L;
                         //获取workpool处理的消费的最新游标，并更新到work自身上去
+                        //但实际上（nextSequence - 1L）这个位置很有可能不是这个WorkProcessor消费掉的
                         sequence.set(nextSequence - 1L);
                     }
                     while (!workSequence.compareAndSet(nextSequence - 1L, nextSequence));

@@ -24,6 +24,7 @@ public interface SequenceBarrier
 {
     /**
      * 核心方法
+     * 返回的availableSequence可能比要求的 nextSequence 大，这意味着生产者生产出了很多可以消费的 event
      * Wait for the given sequence to be available for consumption.
      *
      * @param sequence to wait for

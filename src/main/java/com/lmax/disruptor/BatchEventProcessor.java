@@ -152,7 +152,8 @@ public final class BatchEventProcessor<T>
                     eventHandler.onEvent(event, nextSequence, nextSequence == availableSequence);
                     nextSequence++;
                 }
-                //每个消费者都有它自己的Sequence，所以不存在并发修改问题，无需用到setVolatile方法
+                //每个消费者都有它自己的Sequence，所以不存在并发修改问题，无需用到setVolatile方法，
+                //此时 Sequencer 上的 gatingSequences 因为是引用的关系也会被更新。如果最低消费者Sequence也更新的话，生产者就能生产事件了
                 sequence.set(availableSequence);
             } catch (final TimeoutException e) {
                 notifyTimeout(sequence.get());

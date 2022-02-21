@@ -22,6 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.lmax.disruptor.util.ThreadHints;
 
 /**
+ * 该策略吞吐量和低延迟较差,好处CPU资源消耗少
  * Blocking strategy that uses a lock and condition variable for {@link EventProcessor}s waiting on a barrier.
  * <p>
  * This strategy can be used when throughput and low-latency are not as important as CPU resource.

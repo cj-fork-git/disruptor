@@ -18,10 +18,12 @@ package com.lmax.disruptor;
 import java.util.concurrent.locks.LockSupport;
 
 /**
+ * 该实现是在性能和 CPU 占用之间的一种折中。主要依靠消费者的自旋,对生产者友好signalAllWhenBlocking无需做任何事情
  * Sleeping strategy that initially spins, then uses a Thread.yield(), and
  * eventually sleep (<code>LockSupport.parkNanos(n)</code>) for the minimum
  * number of nanos the OS and JVM will allow while the
  * {@link com.lmax.disruptor.EventProcessor}s are waiting on a barrier.
+ *
  * <p>
  * This strategy is a good compromise between performance and CPU resource.
  * Latency spikes can occur after quiet periods.  It will also reduce the impact
