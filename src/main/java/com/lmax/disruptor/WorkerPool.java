@@ -96,7 +96,6 @@ public final class WorkerPool<T>
                 exceptionHandler,
                 workSequence);
         }
-        //TODO:cj 这个作用是什么
         ringBuffer.addGatingSequences(getWorkerSequences());
     }
 

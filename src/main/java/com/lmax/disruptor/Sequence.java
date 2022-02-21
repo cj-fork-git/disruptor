@@ -91,6 +91,7 @@ public class Sequence extends RhsPadding
     }
 
     /**
+     * 实现说明：提高写性能，不需要volatile的写可见性，就直接用UNSAFE对象写
      * Perform an ordered write of this sequence.  The intent is
      * a Store/Store barrier between this write and any previous
      * store.

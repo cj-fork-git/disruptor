@@ -152,7 +152,7 @@ public final class BatchEventProcessor<T>
                     eventHandler.onEvent(event, nextSequence, nextSequence == availableSequence);
                     nextSequence++;
                 }
-
+                //每个消费者都有它自己的Sequence，所以不存在并发修改问题，无需用到setVolatile方法
                 sequence.set(availableSequence);
             } catch (final TimeoutException e) {
                 notifyTimeout(sequence.get());
