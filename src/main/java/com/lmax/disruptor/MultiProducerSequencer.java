@@ -43,7 +43,8 @@ public final class MultiProducerSequencer extends AbstractSequencer
 
     // availableBuffer tracks the state of each ringbuffer slot
     // see below for more details on the approach
-    //可用性buffer数组用于ringbuffer状态跟踪
+    //可用性buffer数组:用于标记ringbuffer sequence可用性状态
+    //针对这样子的一个业务场景:next()生产最新sequence,这时sequence对应的事件尚未被覆盖,消费者端不允许消费这种尚未完成的sequence
     private final int[] availableBuffer;
     //=bufferSize - 1
     private final int indexMask;
