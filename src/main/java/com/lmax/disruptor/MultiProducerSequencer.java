@@ -38,7 +38,7 @@ public final class MultiProducerSequencer extends AbstractSequencer
     private static final long BASE = UNSAFE.arrayBaseOffset(int[].class);
     //int[]数组对象一个元素内存字节大小
     private static final long SCALE = UNSAFE.arrayIndexScale(int[].class);
-    //消费者集合已消费sequence
+    //消费者集合最低的已消费的Sequence
     private final Sequence gatingSequenceCache = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
 
     // availableBuffer tracks the state of each ringbuffer slot
@@ -132,7 +132,7 @@ public final class MultiProducerSequencer extends AbstractSequencer
             //最高可发布sequence值阈值A<Min(消费者集合已消费的最低sequence值)+bufferSize，不能套娃。nextSequence表示阈值A
             long wrapPoint = next - bufferSize;
             long cachedGatingSequence = gatingSequenceCache.get();
-
+            //第二个条件'cachedGatingSequence > current'基本不可能命中
             if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
             {
                 long gatingSequence = Util.getMinimumSequence(gatingSequences, current);
@@ -145,7 +145,9 @@ public final class MultiProducerSequencer extends AbstractSequencer
                 //更新消费者最低已消费sequence
                 gatingSequenceCache.set(gatingSequence);
             }
-            //CAS原子更新，因为可能多个生产者线程并发修改current
+            //在next方法内部就已经更新cursor,考虑这样子的场景:cursor已更新，但是事件还未覆盖填充，就被消费者消费了，应该是有机制防止这种场景 yes
+            //消费者端获取getHighestPublishedSequence()中就用availableBuffer数组isAvailable方法做了判断，防止未填充完成的事件被提前消费
+            //CAS原子更新，因为可能多个生产者线程并发修改cursor
             else if (cursor.compareAndSet(current, next))
             {
                 break;
