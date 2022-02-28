@@ -28,20 +28,27 @@ abstract class RingBufferPad
 
 abstract class RingBufferFields<E> extends RingBufferPad
 {
+    //数组对象对齐pad长度
     private static final int BUFFER_PAD;
+    //数组对象第一个元素地址
     private static final long REF_ARRAY_BASE;
+    //公式 2^REF_ELEMENT_SHIFT=Object数组一个元素内存长度大小(8字节，还是4字节）和是否启动了class point size压缩有关系
     private static final int REF_ELEMENT_SHIFT;
     private static final Unsafe UNSAFE = Util.getUnsafe();
 
     static
     {
+        //UNSAFE.arrayIndexScale 返回数组中一个元素占用的大小
         final int scale = UNSAFE.arrayIndexScale(Object[].class);
+        //保持一个等式：BUFFER_PAD << REF_ELEMENT_SHIFT=128
         if (4 == scale)
         {
+            //2^2=4，64位jvm启动了class point size压缩
             REF_ELEMENT_SHIFT = 2;
         }
         else if (8 == scale)
         {
+            //2^3=8，64位jvm没有启动class point size压缩
             REF_ELEMENT_SHIFT = 3;
         }
         else
@@ -49,10 +56,13 @@ abstract class RingBufferFields<E> extends RingBufferPad
             throw new IllegalStateException("Unknown pointer size");
         }
         BUFFER_PAD = 128 / scale;
+        //UNSAFE.arrayBaseOffset 返回数组中第一个元素的偏移地址
         // Including the buffer pad in the array base offset
+        //TODO:cj 为什么需要加上后者BUFFER_PAD << REF_ELEMENT_SHIFT，去除掉有什么影响？为了解决访问数组头部和尾部的伪共享问题
         REF_ARRAY_BASE = UNSAFE.arrayBaseOffset(Object[].class) + (BUFFER_PAD << REF_ELEMENT_SHIFT);
     }
 
+    //buffersize长度掩码，形如'1111111....'
     private final long indexMask;
     private final Object[] entries;
     protected final int bufferSize;
@@ -75,6 +85,7 @@ abstract class RingBufferFields<E> extends RingBufferPad
         }
 
         this.indexMask = bufferSize - 1;
+        //TODO:为何首位都要留白
         this.entries = new Object[sequencer.getBufferSize() + 2 * BUFFER_PAD];
         fill(eventFactory);
     }
@@ -87,9 +98,18 @@ abstract class RingBufferFields<E> extends RingBufferPad
         }
     }
 
+    /**
+     * 放回指定sequence对应的环形数组元素
+     * sequence & indexMask :sequence在底层数组结构的位置
+     *
+     * @param sequence
+     * @return
+     */
     @SuppressWarnings("unchecked")
     protected final E elementAt(long sequence)
     {
+        //获得给定对象的指定地址偏移量的值
+        //TODO:cj 为何不直接用数组下标方式访问，而用UNSAFE方法访问，性能问题原因嘛？？jmh进行方法微测试 see https://github.com/LMAX-Exchange/disruptor/pull/344
         return (E) UNSAFE.getObject(entries, REF_ARRAY_BASE + ((sequence & indexMask) << REF_ELEMENT_SHIFT));
     }
 }
