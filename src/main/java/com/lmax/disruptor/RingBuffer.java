@@ -58,7 +58,8 @@ abstract class RingBufferFields<E> extends RingBufferPad
         BUFFER_PAD = 128 / scale;
         //UNSAFE.arrayBaseOffset 返回数组中第一个元素的偏移地址
         // Including the buffer pad in the array base offset
-        //TODO:cj 为什么需要加上后者BUFFER_PAD << REF_ELEMENT_SHIFT，去除掉有什么影响？为了解决访问数组头部和尾部的伪共享问题
+        //为什么需要加上后者BUFFER_PAD << REF_ELEMENT_SHIFT，去除掉有什么影响？为了解决访问数组头部和尾部的伪共享问题,
+        //为什么BUFFER_PAD << REF_ELEMENT_SHIFT 偏移量=128,16个字节?，缓存行64位的两倍，see https://www.cnblogs.com/cyfonly/p/5800758.html
         REF_ARRAY_BASE = UNSAFE.arrayBaseOffset(Object[].class) + (BUFFER_PAD << REF_ELEMENT_SHIFT);
     }
 
