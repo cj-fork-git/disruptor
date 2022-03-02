@@ -15,11 +15,10 @@
  */
 package com.lmax.disruptor;
 
-import java.util.concurrent.locks.LockSupport;
-
+import com.lmax.disruptor.util.Util;
 import sun.misc.Unsafe;
 
-import com.lmax.disruptor.util.Util;
+import java.util.concurrent.locks.LockSupport;
 
 
 /**
@@ -294,6 +293,8 @@ public final class MultiProducerSequencer extends AbstractSequencer
     @Override
     public long getHighestPublishedSequence(long lowerBound, long availableSequence)
     {
+        //availableSequence是从ringbuffer中获得的最高sequence值，但可能存在不可用(sequence生成了，但事件尚未覆盖的场景)的情况
+        // 所以需要判断sequence的可用性
         for (long sequence = lowerBound; sequence <= availableSequence; sequence++)
         {
             if (!isAvailable(sequence))
