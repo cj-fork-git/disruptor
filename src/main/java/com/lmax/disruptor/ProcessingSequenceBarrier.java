@@ -59,7 +59,7 @@ final class ProcessingSequenceBarrier implements SequenceBarrier
         {
             return availableSequence;
         }
-
+        //返回ringbuffer可用的sequence值大于当前请求的sequence值,
         return sequencer.getHighestPublishedSequence(sequence, availableSequence);
     }
 

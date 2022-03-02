@@ -37,11 +37,13 @@ public final class BlockingWaitStrategy implements WaitStrategy
         throws AlertException, InterruptedException
     {
         long availableSequence;
+        //生产者没有发布最新事件
         if (cursorSequence.get() < sequence)
         {
             lock.lock();
             try
             {
+                //加锁是为了等待被唤醒
                 while (cursorSequence.get() < sequence)
                 {
                     barrier.checkAlert();
@@ -53,7 +55,7 @@ public final class BlockingWaitStrategy implements WaitStrategy
                 lock.unlock();
             }
         }
-
+        //availableSequence 从依赖的消费者组获取最小的sequence
         while ((availableSequence = dependentSequence.get()) < sequence)
         {
             barrier.checkAlert();
